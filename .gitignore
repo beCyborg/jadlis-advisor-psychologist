@@ -1,0 +1,8 @@
+# Личные данные совета в репозиторий не попадают никогда
+*.local.md
+_local/
+.adv-psy-run/
+_runs/
+
+# macOS
+.DS_Store
