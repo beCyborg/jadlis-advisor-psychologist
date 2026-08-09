@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "becyborg-psy",
+  "owner": {
+    "name": "Be Cyborg",
+    "url": "https://github.com/beCyborg"
+  },
+  "description": "Совет линз-методологий по психологической помощи для Claude Code: структурированная самопомощь рядом с живым терапевтом, с триаж-гейтом, тирами SELF / REQUIRES-THERAPIST и safety-ревью с правом блока.",
+  "plugins": [
+    {
+      "name": "adv-psy",
+      "source": "./plugins/adv-psy",
+      "category": "productivity",
+      "tags": [
+        "psychology",
+        "self-help",
+        "council",
+        "workflow"
+      ],
+      "description": "11 методологий-линз (КПТ, схема-терапия, ACT, CFT, DBT-навыки, IPT, горе, перфекционизм, поведенческая активация, общие факторы, калибровка доказательности) разбирают запрос каждая со своей рамки; скептики проверяют claims, safety-ревьюер читает вердикт последним и может его заблокировать."
+    }
+  ],
+  "renames": {}
+}
