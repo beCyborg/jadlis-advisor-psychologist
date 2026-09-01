@@ -1,6 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "adv-psy",
+  "version": "1.0.0",
+  "license": "MIT",
   "displayName": "adv-psy — совет линз по психологической помощи",
   "description": "Структурированная самопомощь и психообразование рядом с живым терапевтом: триаж-гейт, 11 методологий-линз, скептики, safety-ревью с правом блока. Не терапия и не кризисная служба.",
   "author": { "name": "Be Cyborg" },
