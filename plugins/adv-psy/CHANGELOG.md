@@ -2,6 +2,24 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [1.1.0] — 2026-09-07 — режим диалога и фронт-страница вердикта / dialogue mode and verdict front page
+
+### Для человека
+- Основной режим теперь диалог: совет слушает, называет одну линзу-рамку и разговаривает в ней; полный разбор из 11 линз созывается только командой «созывай совет».
+- У вердикта появилась фронт-страница — callout «Коротко» до 15 строк простым языком: что происходит, цепочка, что делать, что вынести терапевту.
+- Диалог обязательно закрывается коротким итогом: брошенный без итога разговор — задокументированный режим вреда.
+
+### For agents
+- Added: режим `DIALOGUE` (Phase A' в `skills/adv-psy/SKILL.md`), выбор рамки в A.5 по колонке «Первая линза» из `references/cross-method-patterns.md`, явный список запрещённых в диалоге REQUIRES-THERAPIST-ходов.
+- Added: секция 0 «Фронт-страница» — `protocols/validator-protocol.md`, `FRONT_PAGE_SPEC` в `workflows/council-psy.js`, поле `frontPage` в `VERDICT_SCHEMA` и `verdictMeta`, п.8 чек-листа в `protocols/safety-protocol.md` и в промпте safety-ревьюера.
+- Added: правила языка вердикта (перевод терминов, ≤15 слов в предложении, запрет citation-тегов и ledger-статусов на фронте) — `protocols/validator-protocol.md`, `workflows/council-psy.js`.
+- Added: `skills/adv-psy/references/gotchas.md` — смещение синтезатора в сторону REQUIRES-THERAPIST-шагов; обязательность safety-ревью не трогать ни в одном режиме.
+- Added: необязательный мост синтеза на вторую модель через `claude -p` (`args.fableBridge === true`, `args.bridgeModel`), по умолчанию ВЫКЛЮЧЕН и работает только в `full`; при сбое роль исполняет тот же воркер.
+- Changed: шаг анонимизации переехал A.6 → B.0 (`SKILL.md`, `protocols/triage-gate.md`, комментарий в `workflows/council-psy.js`); Phase B вызывается только по команде.
+- Changed: `args` workflow принимает `dialogueSummary` и `dialogueLens` (совет обязан оспорить рамку диалога, а не подтвердить её).
+- Changed: `protocols/triage-gate.md` — строка `DIALOGUE` в таблице режимов, COUNCIL гейтом не выбирается; `protocols/memory-protocol.md` — режим и рамка диалога в журнале, объём чтения для `DIALOGUE`.
+- Migration: не требуется. Формат папки памяти, реестр линз и гейт конфигурации не менялись.
+
 ## [1.0.1] — 2026-09-06 — двуязычный README и гейты передачи / bilingual README and handover gates
 
 ### Для человека

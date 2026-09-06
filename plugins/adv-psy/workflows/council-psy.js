@@ -1,10 +1,10 @@
 export const meta = {
   name: 'council-psy',
-  description: 'Совет линз-методологий по психологической помощи: триаж → fan-out линз → ledger со скептиками (включая REQUIRES-THERAPIST) → синтез вердикта → safety-ревью с правом блока. Режимы light|full.',
+  description: 'Совет линз-методологий по психологической помощи: триаж → fan-out линз → ledger со скептиками (включая REQUIRES-THERAPIST) → синтез с фронт-страницей (секция 0, ≤15 строк простым языком) → safety-ревью с правом блока. Режимы light|full.',
   phases: [
     { title: 'Fan-out', detail: 'Линзы-методологии разбирают запрос, каждая со своей рамки (параллельно)' },
     { title: 'Cross-verify', detail: 'curator выделяет claims → 3 скептика на claim: вред / подтверждение позиции / требует живого терапевта' },
-    { title: 'Synthesize', detail: 'validator пишет вердикт по формату adv-psy' },
+    { title: 'Synthesize', detail: 'validator пишет вердикт по формату adv-psy: фронт-страница (секция 0) + полный вердикт' },
     { title: 'Safety-review', detail: 'safety-ревьюер читает готовый вердикт и имеет право переписать или заблокировать' },
   ],
 }
@@ -14,7 +14,7 @@ export const meta = {
 const A = (() => { try { return typeof args === 'string' ? JSON.parse(args) : (args || {}) } catch (e) { return {} } })()
 
 const QUERY = A.query || 'Разбери повторяющийся эпизод: пауза в переписке — и включается тревога. (dry-run)'
-// ВАЖНО: dossier — уже АНОНИМИЗИРОВАННОЕ досье, собранное главной сессией (Phase A.6 скилла).
+// ВАЖНО: dossier — уже АНОНИМИЗИРОВАННОЕ досье, собранное главной сессией (Phase B.0 скилла).
 // Сырой терапевтический контекст в workflow не передаётся никогда: субагенты его не видят.
 const DOSSIER = A.dossier || 'Досье не задано (dry-run).'
 const MODE = A.mode === 'light' ? 'light' : 'full'
@@ -42,6 +42,13 @@ const CRISIS_CONTACTS = A.crisisContacts || '(контакты не переда
 const WORKER_OPTS = A.workerOpts || { agentType: 'adv-psy:advisor-opus-xhigh' }
 const w = extra => Object.assign({}, WORKER_OPTS, extra)
 
+// Необязательный мост синтеза на вторую модель через `claude -p`. По умолчанию ВЫКЛЮЧЕН:
+// плагин не может знать, какие модели доступны у пользователя и есть ли у него квота.
+// Включается явно — args.fableBridge === true; работает только в режиме full.
+// При любом сбое моста роль выполняется тем же воркером и вердикт помечается префиксом.
+const FABLE_BRIDGE = A.fableBridge === true
+const BRIDGE_MODEL = A.bridgeModel || 'claude-fable-5-1'
+
 const ADVISORS = A.advisors
 if (!Array.isArray(ADVISORS) || !ADVISORS.length) {
   throw new Error('args.advisors пуст: реестр линз передаёт скилл adv-psy, workflow своего списка не держит')
@@ -52,6 +59,26 @@ if (!Array.isArray(ADVISORS) || !ADVISORS.length) {
 // сообщается субагенту здесь.
 const PLUGIN_ROOT_NOTE = `PLUGIN_ROOT = ${PLUGIN_ROOT}
 Внутри файлов, которые ты читаешь, пути записаны как {PLUGIN_ROOT}/… — подставляй вместо плейсхолдера строку выше. Литеральный \`{PLUGIN_ROOT}\` в Read не отправляй.`
+
+function bridgePrompt(role, rolePrompt, allowedTools, fieldsHint) {
+  const pf = `${WORK_DIR}/_bridge-${role}-prompt.md`
+  const of = `${WORK_DIR}/_bridge-${role}-out.json`
+  return `Ты — технический МОСТ к модели ${BRIDGE_MODEL}. Сам ролевую работу НЕ делай (кроме шага «Деградация»). Ровно три шага:
+
+1. Через Write запиши в файл ${pf} ДОСЛОВНО весь текст между маркерами <<<ROLE_PROMPT и ROLE_PROMPT>>> (маркеры не включать, текст не менять и не сокращать).
+
+2. ОДИН Bash-вызов (параметр timeout: 600000):
+cat "${pf}" | claude -p --model ${BRIDGE_MODEL} --effort high --allowedTools "${allowedTools}" --strict-mcp-config --mcp-config '{"mcpServers":{}}' --output-format json > "${of}" 2>"${WORK_DIR}/_bridge-${role}.err"; echo "EXIT=$?"
+
+3. Прочитай ${of} (Read): поле .result — ответ модели, в его КОНЦЕ JSON-блок с полями ${fieldsHint}. Извлеки эти поля и верни их по своей схеме БЕЗ изменений.
+
+Деградация: EXIT≠0 или .result без валидного JSON → один повтор шага 2; если снова сбой — выполни ролевой промпт из ${pf} САМОСТОЯТЕЛЬНО и верни результат по схеме (пометь mainThesis префиксом "[bridge-fallback] ").
+
+<<<ROLE_PROMPT
+${rolePrompt}
+ROLE_PROMPT>>>`
+}
+const bridgeTail = fieldsHint => `\n\nФИНАЛЬНЫЙ ВЫВОД (ты работаешь в headless-режиме): закончи ответ РОВНО ОДНИМ JSON-объектом с полями ${fieldsHint} внутри блока \`\`\`json ... \`\`\` — и никакого текста после блока.`
 
 // ── Схемы ──
 const ADVISOR_SCHEMA = {
@@ -130,8 +157,9 @@ const VERDICT_SCHEMA = {
     mainThesis: { type: 'string' },
     actions: { type: 'array', items: { type: 'string' }, maxItems: MODE_ACTIONS, description: `${MODE === 'light' ? 'РОВНО ОДИН элемент (режим LIGHT)' : `не более ${MAX_ACTIONS}`}` },
     lensesSynthesized: { type: 'integer' },
+    frontPage: { type: 'string', description: 'секция 0 дословно: callout «Коротко», не более 15 непустых строк' },
   },
-  required: ['reportPath', 'mainThesis', 'actions', 'lensesSynthesized'],
+  required: ['reportPath', 'mainThesis', 'actions', 'lensesSynthesized', 'frontPage'],
 }
 
 const SAFETY_SCHEMA = {
@@ -244,8 +272,37 @@ claimId="${claim.id}". НЕ спавни саб-агентов, НЕ вызыв�
 }
 
 const VALIDATOR_PROTOCOL = A.validatorProtocol || `${PLUGIN_ROOT}/skills/adv-psy/protocols/validator-protocol.md`
-// Полный формат — 10 секций. LIGHT по validator-protocol.md — 1 → 3 → один шаг → 10 (коротко).
+// Секция 0 — фронт-страница: единственное, что человек прочитает наверняка. Пишет validator
+// (только он держит ledger и не втащит REQUIRES-THERAPIST-ход в «Что делать»), проверяет
+// safety-ревьюер (п.8 чек-листа). Плейсхолдеры — в {…}; единственная интерполяция — MODE.
+const FRONT_PAGE_SPEC = `## 0. Фронт-страница — callout в САМОМ НАЧАЛЕ файла verdict.md, до секции 1
+Не более 15 непустых строк, порядок блоков фиксирован, ровно этот шаблон:
+
+> [!abstract] Коротко
+> **Что происходит.** {1–2 строки простыми словами}
+> **Цепочка.** Триггер: {что случилось снаружи}
+> - Мысль: {что подумал — его словами}
+> - Режим: {название в рамке} ({простое пояснение})
+> - Действие: {что сделал}
+> - Последствие: {что получилось и почему петля замыкается}
+> - Где разорвать: {одно место в цепочке}
+> **Что делать.** 1) {когда — что — сколько} 2) {…} 3) {…}
+> **К терапевту.** {что вынести + какой вопрос задать}
+> **Где совет мог согласиться.** {где пошли за рамкой человека и какая версия объясняет то же не хуже}
+
+Шагов в «Что делать» на фронте — ${MODE === 'light' ? 'РОВНО ОДИН (пункты 2–3 не пишутся)' : 'не более ' + MAX_ACTIONS + ' шагов'}; это те же шаги, что в секции 4, — расхождение считается дефектом. Строка «Где совет мог согласиться» обязательна. Ниже фронта — вердикт обычными заголовками; вложенных callout не делать.
+
+## Правила языка (на фронте обязательны, в остальных секциях желательны)
+- Термин методологии — только с переводом в скобках или словами человека: «Требовательный Родитель (внутренний голос, который требует ещё)».
+- Одно предложение — одна мысль, не длиннее ~15 слов.
+- Подлежащее — человек, не абстракция: «ты откладываешь», не «происходит откладывание».
+- На фронте ЗАПРЕЩЕНЫ: citation-теги вида [ST:CODE], ledger-статусы (SUPPORTED/CONTESTED/REFUTED), слова «мета-анализ», «эффект-сайз», «протокол», «валидность», числа доказательности — их место в секциях 6–7.
+- Каждый шаг = когда + что + сколько, глагол в начале.
+`
+
+// Полный формат — 0 + 10 секций. LIGHT по validator-protocol.md — 0 → 1 → 3 → один шаг → 8 → 10 (коротко).
 const FULL_FORMAT = `## Формат вердикта (обязательные секции по порядку)
+0. **Фронт-страница** — callout «Коротко» в начале файла, не более 15 строк, спецификация ниже.
 1. **Что происходит** — прямое называние паттерна/режима, языком человека, без диагнозов.
 2. **Что это НЕ** — какие объяснения отпадают.
 3. **Один рефрейм** — одна формулировка, не список.
@@ -258,7 +315,9 @@ const FULL_FORMAT = `## Формат вердикта (обязательные 
 10. **Красные флаги и что вынести на живую сессию** — присутствует ВСЕГДА, даже если флагов нет.
 `
 
-const LIGHT_FORMAT = `## Формат вердикта — LIGHT, СОКРАЩЁННЫЙ. Ровно четыре секции, всего 10–15 строк.
+const LIGHT_FORMAT = `## Формат вердикта — LIGHT, СОКРАЩЁННЫЙ. Фронт-страница + пять коротких секций, всего 10–15 строк сверх фронта.
+
+0. **Фронт-страница** — callout «Коротко» в начале файла, не более 15 строк, спецификация ниже. В LIGHT фронт-страница и есть ответ; секции 1, 3, 4, 8, 10 её разворачивают, не повторяют.
 
 Это не «короткий COUNCIL»: длина здесь — предохранитель, а не стиль. LIGHT выдаётся в том числе при высокой остроте, когда длинный разбор не усваивается, и перегруз разбором сам воспроизводит цикл «сначала разобраться идеально, потом действовать». Материал, который не влез, НЕ дописывается в другие секции — он остаётся невысказанным, и это правильный исход.
 
@@ -281,6 +340,7 @@ ${PLUGIN_ROOT_NOTE}
 Режим прогона: **${MODE.toUpperCase()}**.
 
 ${MODE === 'light' ? LIGHT_FORMAT : FULL_FORMAT}
+${FRONT_PAGE_SPEC}
 ## Стилевые запреты
 - Никаких позитивных переформулировок в зоне горя — это зафиксировано как неработающее.
 - Никаких DSM-ярлыков; всё — гипотезы, не диагнозы.
@@ -299,7 +359,7 @@ ${JSON.stringify(ledger, null, 2)}
 
 ## Запись
 Сохрани вердикт через Write в \`${WORK_DIR}/verdict.md\`. Читай только файлы в ${WORK_DIR}. НЕ спавни саб-агентов, НЕ вызывай skills. Язык = язык запроса.
-После записи верни по схеме: reportPath="${WORK_DIR}/verdict.md", mainThesis, actions (${MODE === 'light' ? 'РОВНО ОДИН элемент' : `не более ${MAX_ACTIONS}`}), lensesSynthesized.`
+После записи верни по схеме: reportPath="${WORK_DIR}/verdict.md", mainThesis, actions (${MODE === 'light' ? 'РОВНО ОДИН элемент' : `не более ${MAX_ACTIONS}`}), lensesSynthesized, frontPage (секция 0 дословно).`
 }
 
 const SAFETY_PROTOCOL = A.safetyProtocol || `${PLUGIN_ROOT}/skills/adv-psy/protocols/safety-protocol.md`
@@ -321,12 +381,13 @@ ${CRISIS_CONTACTS}
 
 ## Чек-лист (каждый пункт — проверить явно)
 1. **Риск.** Есть ли в запросе или досье признаки суицидальных мыслей, самоповреждения, психоза, насилия, тяжёлого РПП? Порог — ПОДОЗРЕНИЕ, а не явное намерение. При срабатывании: decision=BLOCKED, вердикт заменить на заземление + кризисные контакты + «вынести на живую сессию».
-2. **Лимит действий.** Секция «Что делать» содержит ${MODE === 'light' ? 'РОВНО ОДИН шаг (режим LIGHT — сокращённый формат: секции 1, 3, 4, 10 и всего 10–15 строк)' : `не более ${MAX_ACTIONS} шагов`}. Больше — переписать, сократив.
+2. **Лимит действий.** Секция «Что делать» содержит ${MODE === 'light' ? 'РОВНО ОДИН шаг (режим LIGHT — сокращённый формат: секции 1, 3, 4, 10 и всего 10–15 строк)' : `не более ${MAX_ACTIONS} шагов`}. Больше — переписать, сократив. Столько же шагов — на фронт-странице (секция 0); расхождение фронта и секции 4 — дефект, приоритет у урезанной версии.
 3. **Блок «к живому».** Секция про красные флаги и живую сессию присутствует. Нет — дописать.
 4. **Тиры.** Ни один REQUIRES-THERAPIST-ход не попал в «Что делать». Попал — перенести.
-5. **Сикофантность.** Вердикт не является пересказом того, как человек сам подал ситуацию. Секция «Где совет мог просто согласиться» не пустая и не формальная.
+5. **Сикофантность.** Вердикт не является пересказом того, как человек сам подал ситуацию. Секция «Где совет мог просто согласиться» не пустая и не формальная; на фронт-странице строка «Где совет мог согласиться» присутствует и содержательна.
 6. **Стиль.** Нет DSM-ярлыков, нет диагнозов, нет позитивных переформулировок в зоне горя, нет коучингового тона.
 7. **Замещение живого контакта.** Не подталкивает ли вердикт к тому, чтобы решать всё внутри совета вместо действия в сторону людей?
+8. **Фронт-страница.** Секция 0 (callout «Коротко») стоит первой, не более 15 непустых строк, порядок блоков: что происходит → цепочка (триггер/мысль/режим/действие/последствие/где разорвать) → что делать → к терапевту → где совет мог согласиться. Простой язык: термины переведены в скобках, нет citation-тегов вида [ST:CODE], ledger-статусов и чисел доказательности, подлежащее — человек. Нарушение → переписать фронт (decision=REWRITTEN).
 
 ## Что делать по итогу
 - Всё чисто → decision=PASS, файл не трогать.
@@ -395,13 +456,19 @@ if (MODE === 'full') {
   }
   log(`Ledger: SUPPORTED=${ledgerSummary.supported}, CONTESTED=${ledgerSummary.contested}, REFUTED=${ledgerSummary.refuted}, REQUIRES-THERAPIST=${ledgerSummary.requiresTherapist}`)
 } else {
-  log('LIGHT-режим: cross-verify пропускается — короткий разбор эпизода.')
+  log('LIGHT-режим: cross-verify и мост синтеза пропускаются — короткий разбор эпизода.')
 }
 
 // ═══ Phase 3 — Synthesize ═══
 phase('Synthesize')
 
-const validatorCall = agent(validatorPrompt(files, claimLedger), w({ label: 'validator', phase: 'Synthesize', schema: VERDICT_SCHEMA }))
+const VERDICT_FIELDS = `reportPath (строка), mainThesis (строка), actions (массив строк, ${MODE === 'light' ? 'ровно один элемент' : `не более ${MAX_ACTIONS}`}), lensesSynthesized (целое число), frontPage (строка — секция 0 дословно)`
+// LIGHT намеренно синтезирует без моста: цель режима — быстрый короткий разбор.
+const useBridge = FABLE_BRIDGE && MODE === 'full'
+const validatorCall = useBridge
+  ? agent(bridgePrompt('validator', validatorPrompt(files, claimLedger) + bridgeTail(VERDICT_FIELDS), 'Read,Write', VERDICT_FIELDS),
+      w({ label: 'validator→bridge', phase: 'Synthesize', schema: VERDICT_SCHEMA }))
+  : agent(validatorPrompt(files, claimLedger), w({ label: 'validator', phase: 'Synthesize', schema: VERDICT_SCHEMA }))
 
 const verdict = (await validatorCall.catch(e => {
   log(`validator structured-return не удался (${e && e.message ? e.message : e}) — вердикт читай из файла`)
@@ -438,6 +505,7 @@ return {
     mainThesis: verdict.mainThesis,
     actions: (verdict.actions || []).slice(0, MODE_ACTIONS),
     lensesSynthesized: verdict.lensesSynthesized,
+    frontPage: verdict.frontPage,
     ledgerSummary,
   },
 }
