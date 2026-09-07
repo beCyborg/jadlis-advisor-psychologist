@@ -1,6 +1,7 @@
 # Личные данные совета в репозиторий не попадают никогда
 *.local.md
 _local/
+.advisor-psychologist-run/
 .adv-psy-run/
 _runs/
 
