@@ -1,6 +1,6 @@
 [Русский](README.md) · English
 
-# adv-psy — a council of psychological lenses
+# advisor-psychologist — a council of psychological lenses
 
 Eleven psychological approaches examine one situation of yours blind to each other, sceptics test the conclusions, and a safety reviewer reads the finished verdict last — with the right to delete it.
 
@@ -53,26 +53,26 @@ Open Claude Code and paste this block into the input line:
 ```
 You are an installer. Do exactly these steps and nothing beyond them:
 1. Bash: claude plugin marketplace add https://github.com/beCyborg/jadlis-plugins.git
-2. Bash: claude plugin install adv-psy@jadlis --config PSY_MEMORY_DIR=~/adv-psy
-3. Tell me in one line: "Send /adv-psy:adv-psy hi and fill in the crisis contacts".
+2. Bash: claude plugin install advisor-psychologist@jadlis --config MEMORY_DIR=~/advisors-memory/Психотерапевт
+3. Tell me in one line: "Send /advisor-psychologist hi and fill in the crisis contacts".
 ```
 
 The same two commands by hand, if Bash is unavailable in the app:
 
 ```bash
 claude plugin marketplace add https://github.com/beCyborg/jadlis-plugins.git
-claude plugin install adv-psy@jadlis --config PSY_MEMORY_DIR=~/adv-psy
+claude plugin install advisor-psychologist@jadlis --config MEMORY_DIR=~/advisors-memory/Психотерапевт
 ```
 
-Do not skip `--config`: the manifest default is not substituted automatically. Without it the council stops on the first run and asks for a folder (you can also set it later — `/plugin` → adv-psy → settings).
+Do not skip `--config`: the manifest default is not substituted automatically. Without it the council stops on the first run and asks for a folder (you can also set it later — `/plugin` → advisor-psychologist → settings).
 
-**Step three — crisis contacts.** Run `/adv-psy:adv-psy hi`: the council unpacks the memory folder, creates `~/adv-psy/_local/crisis-contacts.md` from a template and stops. Fill in the numbers for your country (check them against the services' official sites), delete the `<!-- НЕ ЗАПОЛНЕНО -->` line — and the council starts working. The gate is deliberately hard: a session without working contacts is exactly the failure mode the safety protocol exists to prevent.
+**Step three — crisis contacts.** Run `/advisor-psychologist hi`: the council unpacks the memory folder, creates `~/advisors-memory/Психотерапевт/_local/crisis-contacts.md` from a template and stops. Fill in the numbers for your country (check them against the services' official sites), delete the `<!-- НЕ ЗАПОЛНЕНО -->` line — and the council starts working. The gate is deliberately hard: a session without working contacts is exactly the failure mode the safety protocol exists to prevent.
 
 The plugin also installs from this repository's own marketplace, `becyborg-psy`:
 
 ```bash
-claude plugin marketplace add https://github.com/beCyborg/adv-psy-plugin.git
-claude plugin install adv-psy@becyborg-psy --config PSY_MEMORY_DIR=~/adv-psy
+claude plugin marketplace add https://github.com/beCyborg/jadlis-advisor-psychologist.git
+claude plugin install advisor-psychologist@becyborg-psy --config MEMORY_DIR=~/advisors-memory/Психотерапевт
 ```
 
 The full HTTPS URL guards against an SSH clone: the `owner/repo` shorthand goes over SSH, and a new user usually has no SSH key on GitHub.
@@ -82,12 +82,12 @@ The full HTTPS URL guards against an SSH clone: the `owner/repo` shorthand goes 
 One line, in plain language:
 
 ```
-/adv-psy:adv-psy unpack a recurring episode: a pause in the chat — and anxiety kicks in
-/adv-psy:adv-psy I am choosing between two jobs and both pull in different directions
-/adv-psy:adv-psy rebuild my maps for the quarter
+/advisor-psychologist unpack a recurring episode: a pause in the chat — and anxiety kicks in
+/advisor-psychologist I am choosing between two jobs and both pull in different directions
+/advisor-psychologist rebuild my maps for the quarter
 ```
 
-The council picks the mode itself along three axes — acuteness, scale, novelty (tag `adv-psy--v1.0.1`):
+The council picks the mode itself along three axes — acuteness, scale, novelty (tag `advisor-psychologist--v1.2.0`):
 
 | Mode | Trigger | What you get |
 |---|---|---|
@@ -98,7 +98,7 @@ The council picks the mode itself along three axes — acuteness, scale, novelty
 
 LIGHT is the expected majority of requests; when in doubt the council takes it. Two rules fire unasked: after 23:00 it is LIGHT only (night conclusions rarely survive till morning), and on the fifth request within a week the council says so out loud and asks about a step towards live contact.
 
-Everything the council writes lives as plain markdown files in `PSY_MEMORY_DIR`: `Совет.md` (the hub), `Журнал сессий.md`, `Домашка.md`, `Контекст/`, `Вердикты/`, `_local/`. The folder can sit inside an Obsidian vault — then wikilinks and callouts work.
+Everything the council writes lives as plain markdown files in `MEMORY_DIR`: `Совет.md` (the hub), `Журнал сессий.md`, `Домашка.md`, `Контекст/`, `Вердикты/`, `_local/`. The folder can sit inside an Obsidian vault — then wikilinks and callouts work.
 
 ## Limits and cost
 
@@ -107,17 +107,17 @@ What the council never does: no diagnosis and no DSM labels, no questionnaire sc
 - **Subscription.** You need Claude Code with plugin and Workflow support and a subscription where Opus is available. No external services, API keys or MCP servers — nothing to pay beyond the subscription.
 - **Quota.** COUNCIL is on the order of 44 model calls (11 lenses + curator + three sceptics per claim + synthesiser + safety reviewer), minutes of waiting and a visible chunk of the weekly limit; it is for forks in the road, not for "let's talk".
 - **Privacy.** Raw text never reaches the subagents: before the council convenes, an anonymised dossier is assembled (names → roles, dates and cities removed, third parties' medical and legal facts cut). The memory folder is private — check where its parent syncs and keep it out of public git.
-- **Common refusals.** "Memory folder not set" → set `PSY_MEMORY_DIR`. "Fill in local numbers…" → complete `_local/crisis-contacts.md`. A verdict marked `UNREVIEWED` → the safety reviewer did not run: read with care and repeat the run.
+- **Common refusals.** "Memory folder not set" → set `MEMORY_DIR`. "Fill in local numbers…" → complete `_local/crisis-contacts.md`. A verdict marked `UNREVIEWED` → the safety reviewer did not run: read with care and repeat the run.
 
 ## Update
 
 For third-party marketplaces auto-update is off by default on the recipient's side — a new version arrives on command:
 
 ```bash
-claude plugin update adv-psy@jadlis
+claude plugin update advisor-psychologist@jadlis
 ```
 
-Or enable auto-update once: `/plugin` → **Marketplaces** → `jadlis`. If you installed from `becyborg-psy`, use that name instead of `jadlis`. Version history — [CHANGELOG.md](plugins/adv-psy/CHANGELOG.md).
+Or enable auto-update once: `/plugin` → **Marketplaces** → `jadlis`. If you installed from `becyborg-psy`, use that name instead of `jadlis`. Version history — [CHANGELOG.md](plugins/advisor-psychologist/CHANGELOG.md).
 
 ## Rights
 

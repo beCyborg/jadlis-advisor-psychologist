@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "advisor-psychologist",
+  "version": "1.2.0",
+  "license": "MIT",
+  "displayName": "advisor-psychologist — совет линз по психологической помощи",
+  "description": "Структурированная самопомощь и психообразование рядом с живым терапевтом: триаж-гейт, 11 методологий-линз, скептики, safety-ревью с правом блока. Не терапия и не кризисная служба.",
+  "author": {
+    "name": "Be Cyborg"
+  },
+  "homepage": "https://github.com/beCyborg/jadlis-advisor-psychologist",
+  "repository": "https://github.com/beCyborg/jadlis-advisor-psychologist",
+  "keywords": [
+    "psychology",
+    "self-help",
+    "cbt",
+    "schema-therapy",
+    "act",
+    "council"
+  ],
+  "userConfig": {
+    "MEMORY_DIR": {
+      "type": "directory",
+      "title": "Папка памяти совета",
+      "description": "Куда совет пишет журнал сессий, домашку, карты паттернов и вердикты. Обычная папка с markdown-файлами; можно указать путь внутри Obsidian-vault. Содержимое приватное — выбирай место с учётом синхронизации и бэкапов.",
+      "default": "~/advisors-memory/Психотерапевт",
+      "required": false
+    }
+  }
+}

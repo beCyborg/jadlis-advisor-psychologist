@@ -1,19 +1,19 @@
-# adv-psy-plugin — конвенции репо
+# jadlis-advisor-psychologist — конвенции репо
 
-Репозиторий одного плагина: маркетплейс `becyborg-psy`, плагин в `plugins/adv-psy`. Основной путь установки у получателя — хаб `jadlis` (`https://github.com/beCyborg/jadlis-plugins.git`), который тянет этот репо записью `git-subdir` с пином `ref` + `sha`. Правила ниже читает агент, который правит и коммитит.
+Репозиторий одного плагина: маркетплейс `becyborg-psy`, плагин в `plugins/advisor-psychologist`. Основной путь установки у получателя — хаб `jadlis` (`https://github.com/beCyborg/jadlis-plugins.git`), который тянет этот репо записью `git-subdir` с пином `ref` + `sha`. Правила ниже читает агент, который правит и коммитит.
 
 ## Коммиты
 
-- Тема — Conventional Commits на английском: `type(scope): subject`, ≤72 символа. `scope` = `adv-psy`, `docs` или `repo`.
+- Тема — Conventional Commits на английском: `type(scope): subject`, ≤72 символа. `scope` = `advisor-psychologist`, `docs` или `repo`.
 - Тело двухслойное: `Что изменилось:` — 1–3 предложения по-русски для человека; `Details (for agents):` — буллеты `Added / Changed / Removed / Migration / Refs` с путями.
 - Без строк атрибуции (`Co-Authored-By` и подобных).
 
 ## Релизы
 
-- Версия живёт только в `plugins/adv-psy/.claude-plugin/plugin.json`; бамп — в том же коммите, что и изменение (версия = ключ кеша обновлений).
-- Тег `adv-psy--v{X.Y.Z}`: `claude plugin tag --push plugins/adv-psy`. GitHub Release поверх тега: заголовок и тело — `python3 ~/jadlis-plugins/tools/release-notes.py plugins/adv-psy [--title]`.
+- Версия живёт только в `plugins/advisor-psychologist/.claude-plugin/plugin.json`; бамп — в том же коммите, что и изменение (версия = ключ кеша обновлений).
+- Тег `advisor-psychologist--v{X.Y.Z}`: `claude plugin tag --push plugins/advisor-psychologist`. GitHub Release поверх тега: заголовок и тело — `python3 ~/jadlis-plugins/tools/release-notes.py plugins/advisor-psychologist [--title]`.
 - `CHANGELOG.md` плагина: `## [X.Y.Z] — YYYY-MM-DD — <кратко по-русски> / <short EN>`, затем `### Для человека` (≤3 буллета) и `### For agents` (`Added / Changed / Removed / Migration / Breaking`, с путями).
-- После релиза обновить пин в хабе: `python3 ~/jadlis-plugins/tools/bump-pin.py adv-psy adv-psy--v{X.Y.Z}`.
+- После релиза обновить пин в хабе: `python3 ~/jadlis-plugins/tools/bump-pin.py advisor-psychologist advisor-psychologist--v{X.Y.Z}`.
 - Только patch-forward: никаких force-push и переписывания тегов.
 
 ## README и доки
@@ -21,19 +21,19 @@
 - Пара `README.md` (RU) + `README.en.md` (EN); первая строка — переключатель языка. Одинаковое число и порядок H2. Проверка: `python3 ~/jadlis-plugins/tools/readme-parity.py .`
 - Пять секций документа инструмента: **Зачем / Как выглядит / Как поставить / Как пользоваться / Границы и стоимость**; дополнительные H2 («Обновление», «Права») — только одинаково в обеих языковых версиях.
 - Иллюстрации — `docs/img/*.webp`, копии из `~/jadlis-plugins/docs/img/`; каждая просмотрена глазами, отметка ☑ ставится в `~/jadlis-plugins/docs/img/INDEX.md`. Схемы — Mermaid.
-- Числа и механику сверять с кодом плагина и писать рядом тег (`(тег adv-psy--v1.0.1)`). Примеры вывода — синтетические.
+- Числа и механику сверять с кодом плагина и писать рядом тег (`(тег advisor-psychologist--v1.2.0)`). Примеры вывода — синтетические.
 - Оценок времени в доках не давать: вместо «за 10 минут» — что именно нужно сделать.
 
 ## Приватность и права
 
 - В файлах репо нет ключей, почт, телефонов, путей владельца (`/Users/<имя>` → `~`) и имени владельца. Перед пушем: `gitleaks git .` и `python3 ~/jadlis-plugins/tools/privacy-grep.py .` (оба гоняет CI).
-- Плагин не требует API-ключей и MCP-серверов; единственная настройка — `userConfig.PSY_MEMORY_DIR`. Реальные вердикты, журналы и карты пользователя в репо не попадают никогда — только синтетические примеры.
+- Плагин не требует API-ключей и MCP-серверов; единственная настройка — `userConfig.MEMORY_DIR`. Реальные вердикты, журналы и карты пользователя в репо не попадают никогда — только синтетические примеры.
 - **Открытой лицензии у репозитория нет намеренно** — условия в `NOTICE.md`: дайджесты линз являются производными конспектами коммерческой литературы, личное использование разрешено, переиздание и переиспользование нет. Не добавлять MIT-формулировки в доки и не описывать плагин как open source. Файл `LICENSE` и поле `license` в манифесте достались от домашнего repo-стандарта и противоречат `NOTICE.md` — решение по ним принимает владелец, агент их не трогает.
 - Safety-контур (стоп-гейт по риску, тиры REQUIRES-THERAPIST, safety-ревью) — не оптимизировать и не «упрощать» без явной просьбы: это замена отсутствующим данным о безопасности формата.
 
 ## Разработка
 
 - Правки только в рабочем клоне `~/adv-psy-plugin`, никогда в `~/.claude/plugins/marketplaces/` (фоновый рефреш стирает правки).
-- Перед коммитом: `claude plugin validate plugins/adv-psy`, `claude plugin validate .claude-plugin/marketplace.json`, `readme-parity.py`, `privacy-grep.py`.
-- Имена плагина (`adv-psy`) и маркетплейса (`becyborg-psy`) неизменяемы: переименование ломает существующие установки.
+- Перед коммитом: `claude plugin validate plugins/advisor-psychologist`, `claude plugin validate .claude-plugin/marketplace.json`, `readme-parity.py`, `privacy-grep.py`.
+- Имя плагина сменилось на `advisor-psychologist` (было `adv-psy`) в 1.2.0; старые установки держатся на `renames` в `.claude-plugin/marketplace.json`. Имя маркетплейса `becyborg-psy` неизменяемо. Дальнейшие переименования — только вместе с новой записью в `renames`.
 - Язык доков — русский (RU-файл первичен) + английская пара; код, идентификаторы и имена файлов — английский.
