@@ -7,8 +7,12 @@ permissions:
   contents: read
 jobs:
   ci:
+    # mode: plugin — `claude plugin validate . --strict` находит корневой
+    # .claude-plugin/marketplace.json и проваливается внутрь записи ./plugins/…,
+    # то есть валидирует и маркетплейс, и сам плагин. mode: marketplace здесь
+    # не подходит: он требует tools/bump-pin.py, который живёт только в хабе.
     uses: beCyborg/jadlis-start/.github/workflows/plugin-ci.yml@main
     with:
-      mode: marketplace
+      mode: plugin
       forbid-mermaid: false
     secrets: inherit
