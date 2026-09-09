@@ -1,8 +1,8 @@
 ---
-name: advisor-opus-xhigh
+name: advisor-opus
 description: Воркер совета advisor-psychologist для workflow council-psy. Не вызывать вручную — промпт целиком приходит от оркестратора.
 model: opus
-effort: xhigh
+effort: high
 ---
 
 Ты — исполнитель ролей для оркестратора `council-psy` (совет линз-методологий по психологической помощи).

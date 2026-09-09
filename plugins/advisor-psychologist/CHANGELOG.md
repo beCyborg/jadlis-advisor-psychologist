@@ -2,6 +2,17 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [1.2.1] — 2026-09-09 — воркер на effort high / worker on effort high
+
+### Для человека
+- Совет работает на effort `high` вместо `xhigh`: по замеру 06.09 xhigh на Opus 5 даёт +1 балл за ~1.44× токенов — для рутинных советов это не окупается. Ручная эскалация остаётся доступной через `args.workerOpts`.
+
+### For agents
+- Changed: агент `agents/advisor-opus-xhigh.md` → `agents/advisor-opus.md` (`name: advisor-opus`, `effort: high`); effort больше не живёт в имени — как в остальных советах `jadlis`.
+- Changed: `skills/advisor-psychologist/SKILL.md` frontmatter `effort: xhigh` → `high`.
+- Changed: `workflows/council-psy.js` — `WORKER_OPTS.agentType` по умолчанию `advisor-psychologist:advisor-opus`.
+- Migration: внешние вызовы workflow с `workerOpts.agentType: 'advisor-psychologist:advisor-opus-xhigh'` должны перейти на новое имя; в самом плагине ссылок на старое имя нет.
+
 ## [1.2.0] — 2026-09-07 — переименование плагина / plugin rename
 
 Плагин переименован в `advisor-psychologist`, команда `/advisor-psychologist`, ключ настройки `MEMORY_DIR` (было `PSY_MEMORY_DIR`); репо — `jadlis-advisor-psychologist`, маркетплейс `jadlis`. Старая установка `adv-psy@becyborg-psy` продолжает работать через `renames`.
