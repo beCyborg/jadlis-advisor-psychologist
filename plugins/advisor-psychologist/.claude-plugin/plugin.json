@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "advisor-psychologist",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "displayName": "advisor-psychologist — совет линз по психологической помощи",
   "description": "Структурированная самопомощь и психообразование рядом с живым терапевтом: триаж-гейт, 11 методологий-линз, скептики, safety-ревью с правом блока. Не терапия и не кризисная служба.",
   "author": {

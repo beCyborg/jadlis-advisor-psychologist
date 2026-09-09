@@ -26,7 +26,7 @@ allowed-tools:
   - Workflow
 argument-hint: "<эпизод, паттерн или развилка — совет разберёт со своих рамок>"
 model: opus
-effort: xhigh
+effort: high
 ---
 
 # advisor-psychologist — совет по психологической помощи

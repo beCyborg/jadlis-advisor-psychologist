@@ -37,9 +37,9 @@ const MODE_ACTIONS = MODE === 'light' ? 1 : MAX_ACTIONS
 // Пустой список — не повод молчать: safety-ревьюер обязан потребовать их у скилла.
 const CRISIS_CONTACTS = A.crisisContacts || '(контакты не переданы — safety-ревьюер обязан отметить это как дефект конфигурации)'
 
-// Воркер: субагент плагина (Opus + effort xhigh). Имя квалифицировано именем плагина —
+// Воркер: субагент плагина (Opus + effort high). Имя квалифицировано именем плагина —
 // агенты плагина регистрируются как <плагин>:<агент>.
-const WORKER_OPTS = A.workerOpts || { agentType: 'advisor-psychologist:advisor-opus-xhigh' }
+const WORKER_OPTS = A.workerOpts || { agentType: 'advisor-psychologist:advisor-opus' }
 const w = extra => Object.assign({}, WORKER_OPTS, extra)
 
 // Необязательный мост синтеза на вторую модель через `claude -p`. По умолчанию ВЫКЛЮЧЕН:
