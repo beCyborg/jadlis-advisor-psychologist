@@ -2,6 +2,18 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [1.2.3] — 2026-09-22 — валидатор и safety-ревью на xhigh в режиме full / validator and safety review at xhigh in full mode
+
+### Для человека
+- В полном совете (режим full) валидатор, который пишет итоговый вердикт, и safety-ревьюер работают на effort `xhigh`: это два одиночных агента в конце цепочки, и глубина рассуждения там окупается (разбор Opus 5.5 от 22.09.2026).
+- Линзы, куратор и скептики остаются на `high`; короткий разбор (LIGHT) целиком остаётся на `high`.
+
+### For agents
+- Changed: `workflows/council-psy.js` — the validator `agent()` call (non-bridge branch) and the safety-review `agent()` call get `effort: MODE === 'full' ? 'xhigh' : 'high'`; `agentType`, `label` and `schema` unchanged. An explicit `effort` in `agent()` overrides the worker frontmatter `effort: high`.
+- Unchanged: lenses, curator, skeptics (worker frontmatter `high`); the optional Fable bridge (`validator→bridge` wrapper and `claude -p --effort high`).
+- Changed: `README.md`, `README.en.md` — worker row notes the xhigh override for the validator and the safety reviewer in full mode.
+- Changed: `.claude-plugin/plugin.json` — `version` 1.2.2 → 1.2.3.
+
 ## [1.2.2] — 2026-09-22 — Переход на Opus 5.5 / Switch to Opus 5.5
 
 ### Для человека

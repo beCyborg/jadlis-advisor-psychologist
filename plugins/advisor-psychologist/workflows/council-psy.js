@@ -465,10 +465,13 @@ phase('Synthesize')
 const VERDICT_FIELDS = `reportPath (строка), mainThesis (строка), actions (массив строк, ${MODE === 'light' ? 'ровно один элемент' : `не более ${MAX_ACTIONS}`}), lensesSynthesized (целое число), frontPage (строка — секция 0 дословно)`
 // LIGHT намеренно синтезирует без моста: цель режима — быстрый короткий разбор.
 const useBridge = FABLE_BRIDGE && MODE === 'full'
+// Валидатор и safety-ревьюер — одиночные агенты в конце цепочки: в full им явный effort xhigh
+// (перебивает effort: high из frontmatter воркера), в LIGHT — high, как у остального совета.
+// Обёртка моста (validator→bridge) effort не получает: роль там играет Fable через `--effort high`.
 const validatorCall = useBridge
   ? agent(bridgePrompt('validator', validatorPrompt(files, claimLedger) + bridgeTail(VERDICT_FIELDS), 'Read,Write', VERDICT_FIELDS),
       w({ label: 'validator→bridge', phase: 'Synthesize', schema: VERDICT_SCHEMA }))
-  : agent(validatorPrompt(files, claimLedger), w({ label: 'validator', phase: 'Synthesize', schema: VERDICT_SCHEMA }))
+  : agent(validatorPrompt(files, claimLedger), w({ label: 'validator', phase: 'Synthesize', schema: VERDICT_SCHEMA, effort: MODE === 'full' ? 'xhigh' : 'high' }))
 
 const verdict = (await validatorCall.catch(e => {
   log(`validator structured-return не удался (${e && e.message ? e.message : e}) — вердикт читай из файла`)
@@ -478,7 +481,7 @@ const verdictPath = verdict.reportPath || `${WORK_DIR}/verdict.md`
 
 // ═══ Phase 4 — Safety-review (обязательна в обоих режимах) ═══
 phase('Safety-review')
-const safety = (await agent(safetyPrompt(verdictPath), w({ label: 'safety-review', phase: 'Safety-review', schema: SAFETY_SCHEMA }))
+const safety = (await agent(safetyPrompt(verdictPath), w({ label: 'safety-review', phase: 'Safety-review', schema: SAFETY_SCHEMA, effort: MODE === 'full' ? 'xhigh' : 'high' }))
   .catch(e => {
     log(`safety-ревьюер упал (${e && e.message ? e.message : e}) — вердикт помечается как непроверенный`)
     return null

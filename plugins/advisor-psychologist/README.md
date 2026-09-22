@@ -14,7 +14,7 @@
 | Протоколы | `skills/advisor-psychologist/protocols/` | триаж-гейт, safety (стоп-гейт, тиры, контакты), формат вердикта, память, спецификация линзы |
 | Конфликты методов | `skills/advisor-psychologist/references/cross-method-patterns.md` | маршрутизация «мишень → линза» и что делать, когда линзы расходятся |
 | Workflow | `workflows/council-psy.js` | fan-out линз → curator + скептики → синтез → safety-ревью с правом блока |
-| Воркер | `agents/advisor-opus.md` | исполняет любую роль совета; `model: claude-opus-5-5`, `effort: high` |
+| Воркер | `agents/advisor-opus.md` | исполняет любую роль совета; `model: claude-opus-5-5`, `effort: high`; валидатору и safety-ревьюеру в режиме full workflow ставит `xhigh` |
 | Линзы | `lenses/advisor-*/` | 11 методологий: SKILL.md + `references/` (core, moves, myths, книжные дайджесты) |
 | Общий дайджест | `lenses/_shared/psy-guidelines-2026.md` | калибровка чисел; **единственная копия**, её читают все линзы |
 | Контракт записи | `shared/memory-write-contract.md` | как писать в папку памяти |
