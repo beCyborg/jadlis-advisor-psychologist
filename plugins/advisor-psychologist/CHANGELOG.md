@@ -2,6 +2,19 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [1.2.2] — 2026-09-22 — Переход на Opus 5.5 / Switch to Opus 5.5
+
+### Для человека
+- Совет и его воркер теперь работают на модели Opus 5.5 — у неё окно на 1M токенов сразу, без отдельной настройки.
+- Плагин требует Claude Code ≥ 2.1.280: более старые версии не знают эту модель.
+- Effort не менялся: `high`, как и раньше.
+
+### For agents
+- Changed: `agents/advisor-opus.md` — `model: opus` → `model: claude-opus-5-5` (`effort: high` unchanged).
+- Changed: `skills/advisor-psychologist/SKILL.md` frontmatter — `model: opus` → `model: claude-opus-5-5` (`effort: high` unchanged).
+- Changed: `README.md`, `README.en.md` — worker row of the components table names `model: claude-opus-5-5`.
+- Migration: requires Claude Code ≥ 2.1.280 (the release that added `claude-opus-5-5`); older Claude Code versions may reject the unknown model ID in the skill and agent frontmatter — update Claude Code before updating the plugin.
+
 ## [1.2.1] — 2026-09-09 — воркер на effort high / worker on effort high
 
 ### Для человека

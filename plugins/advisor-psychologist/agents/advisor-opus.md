@@ -1,7 +1,7 @@
 ---
 name: advisor-opus
 description: Воркер совета advisor-psychologist для workflow council-psy. Не вызывать вручную — промпт целиком приходит от оркестратора.
-model: opus
+model: claude-opus-5-5
 effort: high
 ---
 

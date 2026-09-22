@@ -14,7 +14,7 @@ User-facing instructions live in the [repository README](../../README.en.md). Th
 | Protocols | `skills/advisor-psychologist/protocols/` | triage gate, safety (stop gate, tiers, contacts), verdict format, memory, lens spec |
 | Method conflicts | `skills/advisor-psychologist/references/cross-method-patterns.md` | "target → lens" routing and what to do when lenses disagree |
 | Workflow | `workflows/council-psy.js` | lens fan-out → curator + sceptics → synthesis → safety review with a block right |
-| Worker | `agents/advisor-opus.md` | performs any council role; `model: opus`, `effort: high` |
+| Worker | `agents/advisor-opus.md` | performs any council role; `model: claude-opus-5-5`, `effort: high` |
 | Lenses | `lenses/advisor-*/` | 11 methods: SKILL.md + `references/` (core, moves, myths, book digests) |
 | Shared digest | `lenses/_shared/psy-guidelines-2026.md` | number calibration; **the only copy**, read by every lens |
 | Write contract | `shared/memory-write-contract.md` | how to write into the memory folder |

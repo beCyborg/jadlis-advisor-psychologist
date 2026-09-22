@@ -25,7 +25,7 @@ allowed-tools:
   - AskUserQuestion
   - Workflow
 argument-hint: "<эпизод, паттерн или развилка — совет разберёт со своих рамок>"
-model: opus
+model: claude-opus-5-5
 effort: high
 ---
 
