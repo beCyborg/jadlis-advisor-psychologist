@@ -2,6 +2,16 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [1.2.4] — 2026-09-29 — мост синтеза на Opus 5.5 / synthesis bridge on Opus 5.5
+
+### Для человека
+- Необязательный мост синтеза (`fableBridge: true`, только режим full) по умолчанию теперь идёт на Opus 5.5, а не на Fable 5.1. По умолчанию мост по-прежнему выключен, обычный совет это не затрагивает.
+- Зачем: по ресёрчу «Opus 5.5 на моих задачах» Opus 5.5 на high по индексу Artificial Analysis держится вровень с Fable 5.1 на max, а задача обходится примерно вчетверо дешевле.
+
+### For agents
+- Changed: `workflows/council-psy.js` — `BRIDGE_MODEL` default `'claude-fable-5-1'` → `'claude-opus-5-5'`; comments name the bridge model instead of Fable. `args.fableBridge` (historical name) and `args.bridgeModel` override unchanged.
+- Changed: `.claude-plugin/plugin.json` — `version` 1.2.3 → 1.2.4.
+
 ## [1.2.3] — 2026-09-22 — валидатор и safety-ревью на xhigh в режиме full / validator and safety review at xhigh in full mode
 
 ### Для человека

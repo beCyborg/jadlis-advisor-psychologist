@@ -46,8 +46,10 @@ const w = extra => Object.assign({}, WORKER_OPTS, extra)
 // плагин не может знать, какие модели доступны у пользователя и есть ли у него квота.
 // Включается явно — args.fableBridge === true; работает только в режиме full.
 // При любом сбое моста роль выполняется тем же воркером и вердикт помечается префиксом.
+// Модель по умолчанию с 1.2.4 (29.09.2026) — Opus 5.5, Fable 5.1 больше не используется;
+// имя флага `fableBridge` историческое. Другую модель можно передать через args.bridgeModel.
 const FABLE_BRIDGE = A.fableBridge === true
-const BRIDGE_MODEL = A.bridgeModel || 'claude-fable-5-1'
+const BRIDGE_MODEL = A.bridgeModel || 'claude-opus-5-5'
 
 const ADVISORS = A.advisors
 if (!Array.isArray(ADVISORS) || !ADVISORS.length) {
@@ -467,7 +469,7 @@ const VERDICT_FIELDS = `reportPath (строка), mainThesis (строка), ac
 const useBridge = FABLE_BRIDGE && MODE === 'full'
 // Валидатор и safety-ревьюер — одиночные агенты в конце цепочки: в full им явный effort xhigh
 // (перебивает effort: high из frontmatter воркера), в LIGHT — high, как у остального совета.
-// Обёртка моста (validator→bridge) effort не получает: роль там играет Fable через `--effort high`.
+// Обёртка моста (validator→bridge) effort не получает: роль там играет BRIDGE_MODEL через `--effort high`.
 const validatorCall = useBridge
   ? agent(bridgePrompt('validator', validatorPrompt(files, claimLedger) + bridgeTail(VERDICT_FIELDS), 'Read,Write', VERDICT_FIELDS),
       w({ label: 'validator→bridge', phase: 'Synthesize', schema: VERDICT_SCHEMA }))
