@@ -9,17 +9,52 @@ export const meta = {
   ],
 }
 
-// ── Параметры (skill передаёт через args; дефолты — для dry-run через /workflows) ──
-// args может прийти JSON-строкой (харнесс не парсит нетипизированный параметр) — шим как в council-influence.js
-const A = (() => { try { return typeof args === 'string' ? JSON.parse(args) : (args || {}) } catch (e) { return {} } })()
+// ── Параметры (skill передаёт через args; дефолты — только при args.dryRun === true) ──
+// ── Guard: разбор и проверка args — до любого agent(), при сбое не стартует ни один агент ──
+// args может прийти JSON-строкой (харнесс не парсит нетипизированный параметр). Раньше сбой
+// JSON.parse молча давал {}, и прогон целиком шёл на dry-run-дефолтах: кавычки „“ или голая "
+// в значении, resume без args, пропущенный ключ — так сгорало ~2M токенов на тестовых данных.
+// Теперь: строка, которая не парсится, → throw; dry-run-дефолты — ТОЛЬКО при args.dryRun === true;
+// без dryRun обязательные ключи непусты, а пути абсолютные (относительный резолвится от cwd сессии).
+const SCRIPT = 'council-psy'
+const REQUIRED_ARGS = ['query', 'dossier', 'mode', 'advisors', 'workDir', 'pluginRoot']
+const ABSOLUTE_ARGS = ['workDir']
+const ARGS_HINT = 'curly quotes „“ or an unescaped \\" inside a value break JSON; pass the same args in full (resume does not inherit args); a deliberate test run needs dryRun: true'
+const argsPreview = v => { let s; try { s = typeof v === 'string' ? v : JSON.stringify(v) } catch (e) { s = String(v) } return String(s).slice(0, 300) }
+const argsKind = v => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v
+const A = (() => {
+  let v = args
+  if (typeof v === 'string') {
+    try { v = JSON.parse(v) } catch (e) {
+      throw new Error(`${SCRIPT}: args string is not valid JSON (${e.message}); raw, first 300 chars: ${argsPreview(args)}; hint: ${ARGS_HINT}`)
+    }
+  }
+  if (v == null) return {}
+  if (argsKind(v) !== 'object') throw new Error(`${SCRIPT}: args must be an object, got ${argsKind(v)}: ${argsPreview(args)}; hint: ${ARGS_HINT}`)
+  return v
+})()
+const DRY_RUN = A.dryRun === true
+if (!DRY_RUN) {
+  const isEmpty = v => v == null || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && !v.length)
+  const missing = REQUIRED_ARGS.filter(k => isEmpty(A[k]))
+  if (missing.length) {
+    throw new Error(`${SCRIPT}: missing or empty required args: ${missing.join(', ')}; got ${argsKind(args)}: ${argsPreview(args)}; hint: ${ARGS_HINT}`)
+  }
+  for (const k of ABSOLUTE_ARGS) {
+    if (!String(A[k]).startsWith('/')) throw new Error(`${SCRIPT}: args.${k} must be an absolute path, got "${argsPreview(A[k])}" — a relative path resolves against the session cwd; pass {MEMORY_DIR}/… with ~ expanded to $HOME`)
+  }
+  if (A.mode !== 'light' && A.mode !== 'full') throw new Error(`${SCRIPT}: args.mode must be 'light' or 'full', got ${argsPreview(A.mode)}; hint: ${ARGS_HINT}`)
+  if (!Array.isArray(A.advisors)) throw new Error(`${SCRIPT}: args.advisors must be a non-empty array, got ${argsKind(A.advisors)}: ${argsPreview(A.advisors)}; hint: ${ARGS_HINT}`)
+}
+// ── конец guard ──
 
 const QUERY = A.query || 'Разбери повторяющийся эпизод: пауза в переписке — и включается тревога. (dry-run)'
 // ВАЖНО: dossier — уже АНОНИМИЗИРОВАННОЕ досье, собранное главной сессией (Phase B.0 скилла).
 // Сырой терапевтический контекст в workflow не передаётся никогда: субагенты его не видят.
-const DOSSIER = A.dossier || 'Досье не задано (dry-run).'
+const DOSSIER = A.dossier || 'Досье не задано (dry-run).' // без dryRun guard требует dossier
 const MODE = A.mode === 'light' ? 'light' : 'full'
 // Скилл всегда передаёт workDir внутри папки памяти ({MEMORY_DIR}/_runs/...).
-// Дефолт нужен только для dry-run через /workflows и намеренно локальный.
+// Дефолт — только при args.dryRun === true (без него guard требует абсолютный workDir).
 const WORK_DIR = A.workDir || '.advisor-psychologist-run'
 // Корень плагина: ${CLAUDE_PLUGIN_ROOT} в JS не подставляется — скилл передаёт значением.
 const PLUGIN_ROOT = A.pluginRoot || '.'

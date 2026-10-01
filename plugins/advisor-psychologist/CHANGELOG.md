@@ -2,6 +2,19 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [1.2.5] — 2026-10-02 — проверка args до первого агента / args guard before the first agent
+
+### Для человека
+- Если аргументы совета не разобрались (кавычки „“ или голая " внутри значения), пришли пустыми (повтор прогона без аргументов) или в них нет ключа, совет сразу падает с понятной ошибкой и не запускает ни одного агента. Раньше он молча шёл на тестовом запросе и тестовом досье.
+- Рабочая папка прогона обязана быть абсолютным путём; относительную папку памяти скилл делает абсолютной и говорит об этом.
+
+### For agents
+- Changed: `workflows/council-psy.js` — the `try { JSON.parse } catch { return {} }` shim replaced by one guard block before any `agent()`: unparsable string args throw (script name, parse error, 300-char preview, hint on „“/unescaped `\"` and that resume does not inherit args); dry-run defaults only with `args.dryRun === true`; otherwise `query`, `dossier`, `mode` (light|full), `advisors` (array), `workDir`, `pluginRoot` are required and `workDir` must be absolute. `crisisContacts` stays optional (the safety reviewer flags its absence).
+- Changed: `skills/advisor-psychologist/SKILL.md` Phase A.0 step 2 — a relative `MEMORY_DIR` (after `~` expansion) is made absolute (`$(pwd)/…`) and the user is told.
+- Added: `tools/test-workflow-guards.mjs` (repo tool, outside the plugin) — vm-loads `council-psy.js` with stubbed `agent/parallel/phase/log/args`: no args, „“ and bare `"` strings, relative workDir, missing `dossier` → throw with 0 agents; full valid args (object and JSON string) reach `agent()`.
+- Changed: `.claude-plugin/plugin.json` — `version` 1.2.4 → 1.2.5.
+- Migration: a resumed run must pass the same args in full; a deliberate test run passes `dryRun: true`.
+
 ## [1.2.4] — 2026-09-29 — мост синтеза на Opus 5.5 / synthesis bridge on Opus 5.5
 
 ### Для человека
