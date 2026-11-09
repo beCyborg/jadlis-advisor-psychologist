@@ -77,6 +77,24 @@ const CRISIS_CONTACTS = A.crisisContacts || '(контакты не переда
 const WORKER_OPTS = A.workerOpts || { agentType: 'advisor-psychologist:advisor-opus' }
 const w = extra => Object.assign({}, WORKER_OPTS, extra)
 
+// Final agents (1.3.0, 2026-11-09): args.finalOpts {model, effort} — the skill reads them from the PERSONAL file
+// ~/.claude/skills/_shared/final-agent.json (scripts/final-agent.py). Only in mode full: the validator and the
+// safety reviewer get that model and effort per call (LIGHT keeps the worker at high). Without the file the
+// default stays (worker Opus 5.5 at xhigh). On finalOpts an empty answer or a throw → ONE retry on the default,
+// so a classifier stop on the override never costs the verdict or the safety review.
+const FINAL_OPTS = (A.finalOpts && typeof A.finalOpts === 'object' && /^claude-[a-z0-9-]+$/.test(String(A.finalOpts.model || '')) &&
+  ['low', 'medium', 'high', 'xhigh', 'max'].includes(A.finalOpts.effort)) ? { model: A.finalOpts.model, effort: A.finalOpts.effort } : null
+async function finalAgent(prompt, extra) {
+  if (!FINAL_OPTS) return agent(prompt, w(extra))
+  const first = await agent(prompt, w(Object.assign({}, extra, FINAL_OPTS))).catch(e => {
+    log(`${extra.label} (${FINAL_OPTS.model}) упал: ${String((e && e.message) || e).slice(0, 200)}`)
+    return null
+  })
+  if (first) return first
+  log(`${extra.label} на ${FINAL_OPTS.model} не ответил — один повтор на умолчании (Opus 5.5 · ${extra.effort}).`)
+  return agent(prompt, w(Object.assign({}, extra, { label: `${extra.label}→opus-retry` })))
+}
+
 // Необязательный мост синтеза на вторую модель через `claude -p`. По умолчанию ВЫКЛЮЧЕН:
 // плагин не может знать, какие модели доступны у пользователя и есть ли у него квота.
 // Включается явно — args.fableBridge === true; работает только в режиме full.
@@ -502,13 +520,15 @@ phase('Synthesize')
 const VERDICT_FIELDS = `reportPath (строка), mainThesis (строка), actions (массив строк, ${MODE === 'light' ? 'ровно один элемент' : `не более ${MAX_ACTIONS}`}), lensesSynthesized (целое число), frontPage (строка — секция 0 дословно)`
 // LIGHT намеренно синтезирует без моста: цель режима — быстрый короткий разбор.
 const useBridge = FABLE_BRIDGE && MODE === 'full'
+// full → finalAgent (finalOpts из личного файла, с повтором на умолчании); LIGHT → воркер на high, как было.
+const finalCall = MODE === 'full' ? finalAgent : (p, extra) => agent(p, w(extra))
 // Валидатор и safety-ревьюер — одиночные агенты в конце цепочки: в full им явный effort xhigh
 // (перебивает effort: high из frontmatter воркера), в LIGHT — high, как у остального совета.
 // Обёртка моста (validator→bridge) effort не получает: роль там играет BRIDGE_MODEL через `--effort high`.
 const validatorCall = useBridge
   ? agent(bridgePrompt('validator', validatorPrompt(files, claimLedger) + bridgeTail(VERDICT_FIELDS), 'Read,Write', VERDICT_FIELDS),
       w({ label: 'validator→bridge', phase: 'Synthesize', schema: VERDICT_SCHEMA }))
-  : agent(validatorPrompt(files, claimLedger), w({ label: 'validator', phase: 'Synthesize', schema: VERDICT_SCHEMA, effort: MODE === 'full' ? 'xhigh' : 'high' }))
+  : finalCall(validatorPrompt(files, claimLedger), { label: 'validator', phase: 'Synthesize', schema: VERDICT_SCHEMA, effort: MODE === 'full' ? 'xhigh' : 'high' })
 
 const verdict = (await validatorCall.catch(e => {
   log(`validator structured-return не удался (${e && e.message ? e.message : e}) — вердикт читай из файла`)
@@ -518,7 +538,7 @@ const verdictPath = verdict.reportPath || `${WORK_DIR}/verdict.md`
 
 // ═══ Phase 4 — Safety-review (обязательна в обоих режимах) ═══
 phase('Safety-review')
-const safety = (await agent(safetyPrompt(verdictPath), w({ label: 'safety-review', phase: 'Safety-review', schema: SAFETY_SCHEMA, effort: MODE === 'full' ? 'xhigh' : 'high' }))
+const safety = (await finalCall(safetyPrompt(verdictPath), { label: 'safety-review', phase: 'Safety-review', schema: SAFETY_SCHEMA, effort: MODE === 'full' ? 'xhigh' : 'high' })
   .catch(e => {
     log(`safety-ревьюер упал (${e && e.message ? e.message : e}) — вердикт помечается как непроверенный`)
     return null

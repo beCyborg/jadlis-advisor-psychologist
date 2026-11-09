@@ -25,8 +25,6 @@ allowed-tools:
   - AskUserQuestion
   - Workflow
 argument-hint: "<эпизод, паттерн или развилка — совет разберёт со своих рамок>"
-model: claude-opus-5-5
-effort: high
 ---
 
 # advisor-psychologist — совет по психологической помощи
@@ -196,7 +194,12 @@ cp "${CLAUDE_PLUGIN_ROOT}/assets/local-profile.template.md" "{LOCAL_PROFILE}"
 
 Состав линз: COUNCIL — все 11; LIGHT — 2–3 наиболее релевантные по маршрутизации из `references/cross-method-patterns.md`.
 
-Перед вызовом: `mkdir -p "{WORK_DIR}"`.
+Перед вызовом: `mkdir -p "{WORK_DIR}"`. В режиме full выполни `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/final-agent.py"`
+и возьми поле `finalOpts` как `FINAL_OPTS` (`{model, effort}` или `null`; в LIGHT — всегда `null`). Файл
+`~/.claude/skills/_shared/final-agent.json` необязательный и личный; `null` → validator и safety-ревьюер на
+умолчании (Opus 5.5 · xhigh). Скажи одной строкой: «Финальные агенты: claude-fable-5-2 · high (final-agent.json)»
+или «Финальные агенты: по умолчанию, Opus 5.5 · xhigh (final-agent.json: <reason>)». Пустой ответ на модели из
+файла — один повтор на умолчании внутри workflow.
 
 ```
 Workflow({
@@ -213,7 +216,8 @@ Workflow({
     workDir: WORK_DIR,
     pluginRoot: PLUGIN_ROOT,         // ${CLAUDE_PLUGIN_ROOT} в JS НЕ подставляется — передаём значением
     validatorProtocol: "${CLAUDE_PLUGIN_ROOT}/skills/advisor-psychologist/protocols/validator-protocol.md",
-    safetyProtocol: "${CLAUDE_PLUGIN_ROOT}/skills/advisor-psychologist/protocols/safety-protocol.md"
+    safetyProtocol: "${CLAUDE_PLUGIN_ROOT}/skills/advisor-psychologist/protocols/safety-protocol.md",
+    finalOpts: FINAL_OPTS            // из final-agent.py (только full) или null — не выдумывай
   }
 })
 ```

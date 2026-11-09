@@ -2,6 +2,17 @@
 
 Формат: [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [1.3.0] — 2026-11-09 — финальные агенты из личного файла / final agents from a personal file
+
+### Для человека
+- В полном совете валидатор и safety-ревьюер могут работать на модели из личного файла `~/.claude/skills/_shared/final-agent.json` (например, Fable 5.2 · high). Скилл говорит одной строкой, какую модель они получили. Нет файла — всё как раньше: Opus 5.5 · xhigh. Режим LIGHT не меняется.
+- Пустой ответ или сбой на модели из файла — один повтор на Opus 5.5 · xhigh. Safety-ревью не пропадает.
+
+### For agents
+- Added: `scripts/final-agent.py`; `FINAL_OPTS` + `finalAgent()` in `workflows/council-psy.js`; `finalCall` = `finalAgent` in mode full, the plain worker call in LIGHT; validator (non-bridge) and safety-review go through `finalCall`.
+- Changed: `skills/advisor-psychologist/SKILL.md` — B.1 reads final-agent.py (full only), `finalOpts: FINAL_OPTS` in the Workflow args; `model:`/`effort:` removed from the frontmatter.
+- Tests: `tools/test-final-opts.mjs`.
+
 ## [1.2.5] — 2026-10-02 — проверка args до первого агента / args guard before the first agent
 
 ### Для человека
